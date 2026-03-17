@@ -11,7 +11,7 @@ from src.services.db_service import init_db, save_daily_log, get_history_with_va
 
 
 def render():
-    st.set_page_config(page_title="Raj-Market-Forecast-Dashboard", layout="wide")
+    st.set_page_config(page_title="Raj's Market Forecast Dashboard", layout="wide")
     init_db()
 
     # --- CSS: THE BULLETPROOF SOLUTION ---

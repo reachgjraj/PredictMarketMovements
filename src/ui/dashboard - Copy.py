@@ -10,49 +10,18 @@ from src.engine.forecaster import calculate_forecast, get_market_projections, ge
 from src.services.db_service import init_db, save_daily_log, get_history_with_validation
 
 
-# --- CACHED HEATMAP DATA FETCHER ---
-# Caching this prevents the app from freezing up every time you click a button
-@st.cache_data(ttl=300)
-def generate_heatmap_data():
-    tickers = ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'TSLA', 'BRK-B', 'LLY', 'AVGO', 'JPM', 'V', 'WMT',
-               'UNH', 'MA', 'PG', 'JNJ', 'XOM', 'HD', 'COST']
-    try:
-        # Download 5 days to ensure we have a previous close even on Mondays/Holidays
-        df = yf.download(tickers, period="5d", progress=False)['Close']
-        heatmap_data = []
-        for t in tickers:
-            if t in df.columns:
-                s = df[t].dropna()
-                if len(s) >= 2:
-                    change = ((s.iloc[-1] - s.iloc[-2]) / s.iloc[-2]) * 100
-                    # Proxy weight for treemap block sizing
-                    weight = 100 if t in ['AAPL', 'MSFT', 'NVDA'] else (
-                        50 if t in ['GOOGL', 'AMZN', 'META', 'TSLA'] else 20)
-                    heatmap_data.append({'symbol': t, 'change': change, 'weight': weight})
-        return heatmap_data
-    except Exception as e:
-        return []
-
-
 def render():
     st.set_page_config(page_title="Raj-Market-Forecast-Dashboard", layout="wide")
     init_db()
 
-    # --- CSS: BULLETPROOF STYLING & SPACING ADJUSTMENTS ---
+    # --- CSS: BULLETPROOF STYLING ---
     st.markdown("""
         <style>
-        /* Pull the entire dashboard up to remove dead space */
-        .block-container {
-            padding-top: 1.5rem !important;
-            padding-bottom: 1rem !important;
-        }
-
         button[kind="primary"] { 
             background-color: #00cc66 !important; color: #000000 !important; 
             border: 2px solid #ffffff !important; box-shadow: 0px 0px 15px #00cc66;
             font-weight: bold !important;
         }
-
         /* Global overriding to protect Text Colors */
         .bias-bullish { color: #008000 !important; }
         .bias-bearish { color: #cc0000 !important; }
@@ -61,6 +30,11 @@ def render():
         .lon-closed { color: #cc0000 !important; }
         </style>
     """, unsafe_allow_html=True)
+
+    # --- TOP REFRESH ---
+    t_c1, t_c2 = st.columns([9, 1])
+    with t_c2:
+        if st.button("🔄 Refresh"): st.rerun()
 
     # --- STATE MANAGEMENT FOR QUICK SWITCH vs MANUAL TEXT ---
     if 'active_sym' not in st.session_state:
@@ -82,8 +56,7 @@ def render():
     st.write("### ⚡ Quick Switch")
     symbol_options = ["NQ=F", "ES=F", "GC=F", "CL=F", "TSLA", "AMZN"]
 
-    cols_switch = st.columns([1, 1, 1, 1, 1, 1, 3])
-
+    cols_switch = st.columns([1, 1, 1, 1, 1, 1, 2])
     for i, opt in enumerate(symbol_options):
         b_type = "primary" if st.session_state.active_sym == opt else "secondary"
         cols_switch[i].button(opt, key=f"btn_{opt}", type=b_type, use_container_width=True, on_click=set_active_sym,
@@ -226,7 +199,7 @@ def render():
                 st.markdown(html_block.replace('\n', ''), unsafe_allow_html=True)
 
                 # ==========================================
-                # --- LOWER DASHBOARD ---
+                # --- LOWER DASHBOARD (REARRANGED LAYOUT)---
                 # ==========================================
 
                 # ROW 1: Conviction | Breakdown | Volume Trend | Relative Strength
@@ -303,36 +276,9 @@ def render():
 
                 st.markdown("---")
 
-                # ROW 3: Market Heatmap | Market Intel
-                r3_c1, r3_c2 = st.columns([1.5, 1])
-
-                with r3_c1:
-                    st.subheader("🌍 Mega-Cap Heatmap")
-                    h_data = generate_heatmap_data()
-                    if h_data:
-                        df_h = pd.DataFrame(h_data)
-                        fig_hm = go.Figure(go.Treemap(
-                            labels=df_h['symbol'],
-                            parents=[""] * len(df_h),  # No root node, perfectly flat map
-                            values=df_h['weight'],
-                            marker=dict(
-                                colors=df_h['change'],
-                                colorscale=[[0.0, '#cc0000'], [0.45, '#333333'], [0.55, '#333333'], [1.0, '#008000']],
-                                cmin=-3,
-                                cmax=3,
-                            ),
-                            texttemplate="<b>%{label}</b><br>%{customdata:.2f}%",
-                            customdata=df_h['change'],
-                            textfont=dict(color="white", size=15)
-                        ))
-                        fig_hm.update_layout(height=400, margin=dict(l=0, r=0, t=0, b=0), paper_bgcolor='rgba(0,0,0,0)')
-                        st.plotly_chart(fig_hm, use_container_width=True)
-                    else:
-                        st.warning("Heatmap data loading...")
-
-                with r3_c2:
-                    st.subheader("📰 Market Intel")
-                    for n in news[:8]:  # Cap at 8 so it visually aligns with the heatmap height
-                        st.markdown(
-                            f"[{n['time']}] **{n['source']}**: <a href='{n['url']}' target='_blank' style='color: #4da3ff; font-weight: bold; text-decoration: none;'>{n['title']}</a>",
-                            unsafe_allow_html=True)
+                # ROW 3: Market Intel
+                st.subheader("📰 Market Intel")
+                for n in news:
+                    st.markdown(
+                        f"[{n['time']}] **{n['source']}**: <a href='{n['url']}' target='_blank' style='color: #4da3ff; font-weight: bold; text-decoration: none;'>{n['title']}</a>",
+                        unsafe_allow_html=True)

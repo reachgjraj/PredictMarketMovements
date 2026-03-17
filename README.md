@@ -1,4 +1,4 @@
-# 📊 Market Open Intelligence Dashboard
+# 📊 Raj's Market Open Intelligence Dashboard
 
 ## 🚀 Overview
 The Market Open Intelligence Dashboard is a professional-grade, real-time analytics suite built in Python and Streamlit. Designed specifically to navigate the volatility of the **9:30 AM ET New York Open**, it aggregates price action, London session ranges, news sentiment, and institutional volume footprints to calculate a directional trade Bias and Conviction Score.

@@ -1,0 +1,24 @@
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Environment Variables / Secrets
+.env
+
+# Local Database (Keep your trade history local)
+market.db
+*.sqlite3
+
+# PyCharm / IDE Settings
+.idea/
+.vscode/
+
+# Python Cache (Auto-generated files)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS Generated Files
+.DS_Store
+Thumbs.db

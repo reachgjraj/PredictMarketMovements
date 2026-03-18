@@ -5,7 +5,10 @@ from src.services.db_service import init_db
 # Initialize database
 init_db()
 
-st.set_page_config(page_title="PredictMarketMovements", layout="wide")
+st.set_page_config(
+    page_title="Raj-Market-Forecast-Dashboard",
+    layout="wide"
+)
 
 st.sidebar.title("📌 Navigation")
 page = st.sidebar.radio("Select a Screen", ["Market Dashboard", "Options Intelligence", "Trade History"])

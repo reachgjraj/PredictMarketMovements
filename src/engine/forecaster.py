@@ -1,10 +1,10 @@
 import yfinance as yf
 import pandas as pd
 
-
 def calculate_forecast(current_price, s_high, s_low, sentiment_score):
     base_score = 50.0
     tech_impact = 0
+
     if current_price >= s_high:
         tech_impact = 30
     elif current_price <= s_low:
@@ -28,15 +28,6 @@ def calculate_forecast(current_price, s_high, s_low, sentiment_score):
     return final_score, bias, color, round(tech_impact, 2), round(sent_impact, 2)
 
 
-def get_correlation(sym1, sym2):
-    try:
-        data = yf.download([sym1, sym2], period="30d", interval="1d", progress=False)['Close']
-        returns = data.pct_change().dropna()
-        return round(returns[sym1].corr(returns[sym2]), 2)
-    except:
-        return 0.0
-
-
 def get_sector_performance():
     sectors = {"XLK": "Tech", "XLF": "Finance", "XLY": "Disc", "XLC": "Comm", "XLV": "Health", "XLI": "Indus"}
     try:
@@ -48,17 +39,32 @@ def get_sector_performance():
 
 
 def get_market_projections(symbol, df, vol_mult=1.0):
-    ticker = yf.Ticker(symbol)
-    info = ticker.info
-    avg_vol = info.get('averageVolume', 1)
-    cur_vol = info.get('regularMarketVolume') or info.get('volume', 0)
-    vol_ratio = round(cur_vol / avg_vol, 2) if avg_vol > 0 else 1.0
-    prev_close = info.get('previousClose', 0)
-    current_price = info.get('regularMarketPrice') or (df['Close'].iloc[-1] if not df.empty else 0)
+    tk = yf.Ticker(symbol)
+    try:
+        info = tk.info
+    except:
+        info = {}
+
+    avg_vol = info.get('averageVolume', 1) or 1
+    cur_vol = info.get('regularMarketVolume') or info.get('volume', 0) or 0
+    vol_ratio = round(cur_vol / avg_vol, 2)
+
+    prev_close = info.get('previousClose') or (df['Close'].iloc[-2] if len(df) > 1 else 0)
+    current_price = info.get('regularMarketPrice') or df['Close'].iloc[-1]
     forecasted_open = info.get('preMarketPrice') or current_price
+
     df['tr'] = df['High'] - df['Low']
     atr = df['tr'].tail(14).mean()
-    upside, downside = forecasted_open + (atr * 0.5 * vol_mult), forecasted_open - (atr * 0.5 * vol_mult)
-    return {"prev_close": prev_close, "current": round(current_price, 2), "open": round(forecasted_open, 2),
-            "gap": round(((forecasted_open - prev_close) / prev_close) * 100, 2), "upside": round(upside, 2),
-            "downside": round(downside, 2), "vol_ratio": vol_ratio}
+
+    upside = forecasted_open + (atr * 0.5 * vol_mult)
+    downside = forecasted_open - (atr * 0.5 * vol_mult)
+
+    return {
+        "prev_close": round(prev_close, 2),
+        "current": round(current_price, 2),
+        "open": round(forecasted_open, 2),
+        "gap": round(((forecasted_open - prev_close) / prev_close) * 100, 2) if prev_close else 0.0,
+        "upside": round(upside, 2),
+        "downside": round(downside, 2),
+        "vol_ratio": vol_ratio
+    }

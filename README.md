@@ -17,168 +17,101 @@
 
 # 📊 Raj Market Forecast Dashboard
 
-A high‑performance, real‑time **market intelligence and forecasting system** built with Python + Streamlit.  
-Engineered for traders who demand **instant clarity**, **global session awareness**, and **actionable bias scoring** — all in a clean, zero‑waste UI optimized for trading monitors.
+A high‑performance, real‑time **market intelligence and forecasting system** built with Python + Streamlit. Engineered for traders who demand **instant clarity**, **global session awareness**, and **actionable bias scoring** — all in a clean, zero‑waste UI optimized for trading monitors.
 
 ---
 
 ## 🚀 Overview
 
-The Raj Market Forecast Dashboard combines:
+The Raj Market Forecast Dashboard combines institutional-grade analytics with a responsive interface:
 
-- **Global session intelligence** (New York + London)
-- **Institutional bias scoring**
-- **Volume momentum analytics**
-- **Forecast breakdown visualization**
-- **Ticker‑aware news intelligence**
-- **Historical forecast logging**
-- **Sector performance heatmap**
-- **Quick Switch ticker control**
-- **Premium loading animation (C3 Triple Pulse Rings)**
+* **Global Session Intelligence:** Real-time monitoring of New York and London sessions.
+* **Institutional Bias Scoring:** Advanced 3D Sentiment Globes for visual bias cues.
+* **Volume Momentum:** Real-time analytics and Sparkline trends.
+* **Intelligence Feed:** Ticker-aware news via custom-styled HTML feeds.
+* **Persistence:** Historical forecast logging using SQLite.
+* **Performance:** Premium C3 Triple Pulse Rings loading animation for a zero-lag feel.
 
-All wrapped in a **fast, responsive, trader‑optimized interface**.
-
+---
+## 👥 Contributors
+* Lead Developer: GJ (Architecture, UI/UX, Forecasting Engine)
 ---
 
 ## ✨ Key Features
 
-### 🔥 1. Command‑Center UI
-A redesigned layout built for speed and clarity:
-
-- Minimal top margin  
-- High‑contrast typography  
-- Clean spacing  
-- Quick Switch always visible  
-- Optimized for 1080p / 1440p trading setups  
-
----
+### 🔥 1. Command‑Center UI (v1.2.0 Overhaul)
+* **Zero-Margin Layout:** Aggressive CSS overrides eliminate Streamlit's default padding for an edge-to-edge terminal feel.
+* **High-Contrast Cards:** Dedicated Light Blue (NYSE) and Light Purple (London) themes.
+* **Multi-Monitor Optimized:** Tuned for 1080p / 1440p high-density setups.
 
 ### 🌍 2. Dual‑Session Intelligence
+* **New York Session:** Open/Close status, countdown timers, and daily High/Low tracking.
+* **London Session:** Live OHLC (Open, High, Low) and Final Close price.
+* *DST-safe timezone logic via `pytz`.*
 
-#### **New York Session**
-- Open/Close status  
-- Countdown timer  
-- Previous close  
-- Current price  
-- Gap %  
+### 🎯 3. Institutional Bias Engine & 3D Globes
+Proprietary scoring visualized via **Dynamic 3D CSS Globes**:
+* 🟢 **Bullish:** Vibrant Green Globe + Neon Aura.
+* 🔴 **Bearish:** Vibrant Red Globe + Neon Aura.
+* ⚪ **Neutral:** Charcoal/Grey Globe.
 
-#### **London Session**
-- Open/Close status  
-- Countdown timer  
-- Live OHLC (Open, High, Low)  
-- Final Close price after session ends  
-
-All session logic is timezone‑accurate using `pytz` (DST‑safe).
-
----
-
-### 🎬 3. Premium Loading Animation  
-**C3 — Triple Pulse Rings (Neon Green)**  
-- Three independent rings  
-- Smooth zoom‑in / zoom‑out  
-- Randomized phase offsets  
-- Radar‑like liquidity pulse  
-- Runs in parallel with analysis  
-- Zero dead pause  
-
----
-
-### 🎯 4. Institutional Bias Engine
-
-A proprietary scoring model combining:
-
-- Technical position within the day’s range  
-- Real‑time news sentiment  
-- Volume intensity  
-- ATR‑based upside/downside projections  
-
-Outputs:
-
-- **Bullish** (deep green)  
-- **Bearish** (deep red)  
-- **Neutral** (charcoal)  
-- **Conviction Gauge** (0–100)  
-
----
-
-### ⚡ 5. Smart Ticker Management
-
-#### **Quick Switch**
-One‑tap analysis for:
-- `NQ=F`
-- `ES=F`
-- `GC=F`
-- `CL=F`
-- `TSLA`
-- `AMZN`
-
-#### **Manual Entry**
-Enter any Yahoo Finance ticker.  
-Invalid symbols are automatically rejected.
-
----
-
-### 📈 6. Volume & Momentum
-- **VOL RATIO** (current vs average volume)  
-- Sparkline trend visualization  
-- Auto‑highlight when volume exceeds thresholds  
-
----
-
-### 📰 7. Market Intel
-Real‑time, clickable headlines:
-
-- Timestamped  
-- Source‑tagged  
-- Sentiment‑scored  
-- Filtered to last 24 hours  
-
----
-
-### 🧠 8. Forecast Breakdown
-A clean bar‑chart showing:
-
-- Technical impact  
-- Sentiment impact  
-
----
-
-### 🗂️ 9. History Log
-Every forecast is automatically saved with:
-
-- Symbol  
-- Prev Close  
-- Current Price  
-- Forecasted Open  
-- Upside / Downside  
-- Bias  
-- Volume Ratio  
-- London High/Low  
-
-Stored in `market.db` using SQLite.
-
----
-
-### 📊 10. Sector Trend Heatmap
-Live performance of:
-
-- Tech  
-- Finance  
-- Discretionary  
-- Communications  
-- Healthcare  
-- Industrials  
-
-Each sector block includes:
-
-- Color‑coded performance  
-- Clean, compact layout  
+### 📰 4. Market Intel (Custom HTML Feed)
+* **Sentiment Tinting:** Headlines wrapped in containers with 10% opacity backgrounds.
+* **Visual Cues:** Miniature 3D sentiment globes paired with bold, clickable blue hyperlinks.
+* **Expander-Free:** Flat, readable UI designed for quick scanning.
 
 ---
 
 ## 🛠️ Installation & Setup
 
 ### 1. Clone the Repository
-```bash
-git clone https://github.com/reachgjraj/PredictMarketMovements.git
+Bash
+git clone [https://github.com/reachgjraj/PredictMarketMovements.git](https://github.com/reachgjraj/PredictMarketMovements.git)
 cd PredictMarketMovements
+### 2. Install Dependencies
+Bash
+pip install -r requirements.txt
+### 3. Run the Dashboard
+Bash
+streamlit run app.py
+
+---
+
+## 🗺 Roadmap
+### v1.3: Options Intelligence (IV Rank & Profit Probabilities).
+### v1.4: Interactive Economic Calendar integration.
+### v2.0: Backend API deployment & Webhook sentiment alerts.
+
+---
+
+## 📝 Dependencies (requirements.txt)
+The following packages are required to run the dashboard:
+
+Plaintext
+streamlit
+pandas
+numpy
+plotly
+yfinance
+pytz
+requests
+feedparser
+Pillow
+
+---
+
+## 📁 Project Structure
+
+```text
+PredictMarketMovements/
+├── app.py                  # Main entry point
+├── requirements.txt        # Dependencies
+├── market.db               # SQLite Database
+└── src/
+    ├── services/           # DB, News, and API services
+    ├── engine/             # Forecasting and scoring logic
+    └── ui/
+        ├── dashboard.py    # Main UI assembly
+        └── components/
+            └── layout.py   # CSS, 3D Globe styling, and core architecture
+

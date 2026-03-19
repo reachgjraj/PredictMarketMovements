@@ -1,70 +1,143 @@
+import numpy as np
 import yfinance as yf
-import pandas as pd
 
-def calculate_forecast(current_price, s_high, s_low, sentiment_score):
-    base_score = 50.0
-    tech_impact = 0
 
-    if current_price >= s_high:
-        tech_impact = 30
-    elif current_price <= s_low:
-        tech_impact = -30
+# ---------------------------------------------------------
+# PRICE PROJECTION (ATR‑BASED)
+# ---------------------------------------------------------
+def compute_price_projection(df):
+    """
+    Computes upside/downside projections using ATR (Average True Range).
+    ATR gives a volatility-adjusted projection instead of fixed percentages.
+    """
+
+    if len(df) < 15:
+        # fallback for very small datasets
+        current = float(df["Close"].iloc[-1])
+        return current * 0.99, current * 1.01
+
+    high = df["High"]
+    low = df["Low"]
+    close = df["Close"]
+
+    # True Range
+    tr = np.maximum(high - low, np.maximum(abs(high - close.shift()), abs(low - close.shift())))
+    atr = tr.rolling(14).mean().iloc[-1]
+
+    current = float(close.iloc[-1])
+
+    # Projections = current ± ATR
+    downside = current - atr
+    upside = current + atr
+
+    return downside, upside
+
+
+# ---------------------------------------------------------
+# VOLUME MOMENTUM SCORE
+# ---------------------------------------------------------
+def compute_volume_ratio(df):
+    """
+    Computes volume momentum as:
+    last_volume / average_volume
+    """
+
+    vol = df["Volume"]
+    last = float(vol.iloc[-1])
+    avg = float(vol.mean())
+
+    if avg <= 0:
+        return 1.0
+
+    return last / avg
+
+
+# ---------------------------------------------------------
+# TECHNICAL BIAS SCORE (VOLATILITY‑NORMALIZED)
+# ---------------------------------------------------------
+def compute_bias_score(df):
+    """
+    Computes a technical bias score from -1 to +1.
+    Uses:
+    - price position within range
+    - volatility normalization
+    - short-term momentum
+    """
+
+    close = df["Close"]
+    high = float(df["High"].max())
+    low = float(df["Low"].min())
+    current = float(close.iloc[-1])
+
+    # Price position within range (0–1)
+    if high == low:
+        price_pos = 0.5
     else:
-        price_range = s_high - s_low
-        if price_range > 0:
-            pos_percent = (current_price - s_low) / price_range
-            tech_impact = (pos_percent - 0.5) * 40
+        price_pos = (current - low) / (high - low)
 
-    sent_impact = sentiment_score * 15
-    final_score = round(min(100, max(0, base_score + tech_impact + sent_impact)), 1)
+    # Normalize to -1 to +1
+    price_score = (price_pos - 0.5) * 2
 
-    if final_score >= 60:
-        bias, color = "Bullish", "#00cc66"
-    elif final_score <= 40:
-        bias, color = "Bearish", "#ff4b4b"
+    # Momentum (last 5 bars)
+    if len(close) >= 6:
+        momentum = float(close.iloc[-1] - close.iloc[-6]) / max(abs(close.iloc[-6]), 1)
     else:
-        bias, color = "Neutral", "#777777"
+        momentum = 0
 
-    return final_score, bias, color, round(tech_impact, 2), round(sent_impact, 2)
+    # Blend technicals
+    tech_score = (price_score * 0.7) + (momentum * 0.3)
+
+    # Clamp
+    tech_score = max(min(tech_score, 1), -1)
+
+    return tech_score
 
 
+# ---------------------------------------------------------
+# SENTIMENT IMPACT
+# ---------------------------------------------------------
+def compute_sentiment_impact(sent_score):
+    """
+    Converts sentiment score (-∞ to +∞) into a normalized -1 to +1 impact.
+    """
+
+    # Hard clamp extreme sentiment
+    sent_score = max(min(sent_score, 3), -3)
+
+    # Normalize to -1 to +1
+    return sent_score / 3
+
+
+# ---------------------------------------------------------
+# SECTOR PERFORMANCE (UNCHANGED)
+# ---------------------------------------------------------
 def get_sector_performance():
-    sectors = {"XLK": "Tech", "XLF": "Finance", "XLY": "Disc", "XLC": "Comm", "XLV": "Health", "XLI": "Indus"}
-    try:
-        data = yf.download(list(sectors.keys()), period="2d", interval="1d", progress=False)['Close']
-        returns = data.pct_change().iloc[-1] * 100
-        return [{"sector": sectors[s], "change": round(returns[s], 2)} for s in sectors.keys()]
-    except:
-        return []
+    """
+    Returns sector performance using SPDR ETFs.
+    """
 
-
-def get_market_projections(symbol, df, vol_mult=1.0):
-    tk = yf.Ticker(symbol)
-    try:
-        info = tk.info
-    except:
-        info = {}
-
-    avg_vol = info.get('averageVolume', 1) or 1
-    cur_vol = info.get('regularMarketVolume') or info.get('volume', 0) or 0
-    vol_ratio = round(cur_vol / avg_vol, 2)
-
-    prev_close = info.get('previousClose') or (df['Close'].iloc[-2] if len(df) > 1 else 0)
-    current_price = info.get('regularMarketPrice') or df['Close'].iloc[-1]
-    forecasted_open = info.get('preMarketPrice') or current_price
-
-    df['tr'] = df['High'] - df['Low']
-    atr = df['tr'].tail(14).mean()
-
-    upside = forecasted_open + (atr * 0.5 * vol_mult)
-    downside = forecasted_open - (atr * 0.5 * vol_mult)
-
-    return {
-        "prev_close": round(prev_close, 2),
-        "current": round(current_price, 2),
-        "open": round(forecasted_open, 2),
-        "gap": round(((forecasted_open - prev_close) / prev_close) * 100, 2) if prev_close else 0.0,
-        "upside": round(upside, 2),
-        "downside": round(downside, 2),
-        "vol_ratio": vol_ratio
+    sector_map = {
+        "Tech": "XLK",
+        "Finance": "XLF",
+        "Energy": "XLE",
+        "Health": "XLV",
+        "Industrials": "XLI",
     }
+
+    results = []
+
+    for name, ticker in sector_map.items():
+        try:
+            df = yf.Ticker(ticker).history(period="1d")
+            if df.empty:
+                continue
+
+            open_p = df["Open"].iloc[0]
+            close_p = df["Close"].iloc[-1]
+            change = ((close_p - open_p) / open_p) * 100
+
+            results.append({"sector": name, "change": change})
+        except Exception:
+            continue
+
+    return results
